@@ -1,0 +1,137 @@
+﻿@using Models
+@using Newtonsoft.Json
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
+@inject ISnackbar Snackbar
+
+@page "/"
+
+<PageTitle>Index</PageTitle>
+<MudTextField Clearable="true" @bind-Value="sentence" Label="Search a book" Elevation="4" Variant="Variant.Text"></MudTextField>
+<MudButton  Disabled="@onSearch" Variant="Variant.Filled" Spacing Color="Color.Secondary" Class="mt-3" OnClick="search">
+    @if (onSearch)
+    {
+        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
+        <MudText Class="ms-2">Searching</MudText>
+    }
+    else
+    {
+        <MudText>Search</MudText>
+    }
+</MudButton>
+
+@if (showInfo)
+{
+    <div class="mt-1 d-flex flex-column align-center">
+        <MudPagination BoundaryCount="1" MiddleCount="3" ShowFirstButton="true" ShowLastButton="true" Count="@pages" Class="mt-4" SelectedChanged="changePage" Size="Size.Small"/>
+    </div>
+    <br>
+    string info = $"Showing {books.Skip(10*(page-1)).Take(10).Count()} of {books.Count()}";
+    <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Info">@info</MudText>
+    <MudGrid Class="mt-3">
+        @{
+
+            Console.WriteLine(10*(page-1));
+            Console.WriteLine(books.Skip(10*(page-1)).Take(10).Count());
+        }
+        @foreach (var book in books.GetRange(10*(page-1),books.Skip(10*(page-1)).Take(10).Count()))
+        {
+            <MudItem xs=12 lg=6>
+                <MudGrid>
+
+                    <MudItem xs="4" class="d-flex justify-center">
+                        <MudImage ObjectFit="ObjectFit.Cover"  Height="150" Width="100" ObjectPosition="ObjectPosition.Center" Src="@book.cover" Alt="Cover"  Elevation="25" Class="rounded-lg"/>
+                    </MudItem>
+                    <MudItem xs=8 class="text-start">
+
+                        @if (book.title != null)
+                        {
+                            <MudText  Elevation="25" Typo="Typo.caption" Color="Color.Primary">@book.title.ToUpper()</MudText>
+                        }
+                        @if (book.author_name != null)
+                        {
+                            <MudText Typo="Typo.subtitle2">Author: @book.author_name[0]</MudText>
+                        }
+                        @if (book.first_publish_year != null )
+                        {
+                            <MudText Typo="Typo.subtitle2">Publishing Year: @book.first_publish_year</MudText>
+                        }
+                        @if (book.publisher != null )
+                        {
+                            <MudText Typo="Typo.subtitle2">Publisher: @book.publisher[0]</MudText>
+                        }
+                        <br>
+                        <MudMenu Label="Save" Variant="Variant.Filled" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary" >
+                            <MudMenuItem @onclick="() => saveAsRead(book)">As Read</MudMenuItem>
+                            <MudMenuItem OnClick="() => saveAsReading(book)">As Reading</MudMenuItem>
+                            <MudMenuItem OnClick="() => saveAsToBuy(book)">As To Buy</MudMenuItem>
+                        </MudMenu>
+
+                    </MudItem>
+                </MudGrid>
+
+
+
+            </MudItem>
+        }
+    </MudGrid>
+    
+
+
+}
+
+@code {
+    private int page = 1;
+    private bool onSearch = false;
+    bool drawerStatus = false;
+    private string sentence = "";
+    private bool showInfo  {get;set;} = false;
+    private List<Book>? books;
+    private dynamic? infoRes = null;
+    int pages = 0;
+
+    private async Task search()
+    {
+        HttpClient client = new HttpClient();
+
+        onSearch = true;
+        string path = $"https://openlibrary.org/search.json?q={sentence.Replace(" ", "+")}";
+        HttpResponseMessage response = await client.GetAsync(path);
+        if (response.IsSuccessStatusCode)
+        {
+
+            infoRes = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
+            books = JsonConvert.DeserializeObject<List<Book>>(infoRes.docs.ToString());
+            books = books.OrderByDescending(x=> x.first_publish_year).DistinctBy(x=>x.title).ToList();
+            pages = books.Count() % 10 != 0 ? books.Count() / 10 + 1 : books.Count() / 10 ;
+            page = 1;
+            showInfo = true;
+        }
+        onSearch = false;
+    }
+    private void changePage(int i){
+        page=i;
+    }
+    private async void saveAsRead(Book book){
+
+        string message = "Failed to save";
+        var severity = Severity.Error;
+        if(BookShelf.saveAsFinished(book)){
+            message = "Book Saved Successfully!";
+            severity =  Severity.Success;
+            Console.WriteLine("aaaaaaa");
+        }
+        
+        Snackbar.Add(message, severity, config =>
+        {
+            Console.WriteLine("aaaaaaa");
+            config.ShowCloseIcon = true;
+            Console.WriteLine("aaaaaaa");
+        });
+    }
+    private void saveAsReading(Book book){
+        
+    }
+    private void saveAsToBuy(Book book){
+        
+    }
+}
