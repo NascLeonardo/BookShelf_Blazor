@@ -1,0 +1,35 @@
+﻿@using BookShelf_Blazor.Model
+<MudItem xs="4" class="d-flex justify-center">
+	<MudImage ObjectFit="ObjectFit.Cover" Height="150" Width="100" ObjectPosition="ObjectPosition.Center" Src="@book.cover" Alt="Cover" Elevation="25" Class="rounded-lg" />
+</MudItem>
+<MudItem xs=8 class="text-start">
+
+	@if (book.title != null)
+	{
+		<MudText Elevation="25" Typo="Typo.caption" Color="Color.Primary">@book.title.ToUpper()</MudText>
+	}
+	@if (book.author_name != null)
+	{
+		<MudText Typo="Typo.subtitle2">Author: @book.author_name[0]</MudText>
+	}
+	@if (book.first_publish_year != null)
+	{
+		<MudText Typo="Typo.subtitle2">Publishing Year: @book.first_publish_year</MudText>
+	}
+	@if (book.publisher != null)
+	{
+		<MudText Typo="Typo.subtitle2">Publisher: @book.publisher[0]</MudText>
+	}
+	<br>
+	
+	@ChildContent
+
+
+</MudItem>
+
+@code {
+	[Parameter]
+	public Book book { get; set; }
+	[Parameter]
+	public RenderFragment? ChildContent { get; set; }
+}

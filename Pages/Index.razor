@@ -1,9 +1,9 @@
-﻿@using Models
+﻿@using BookShelf_Blazor.Model
 @using Newtonsoft.Json
-@inject Blazored.LocalStorage.ILocalStorageService localStorage
 @inject ISnackbar Snackbar
-
+@inherits BaseComponent
 @page "/"
+@using Components
 
 <PageTitle>Index</PageTitle>
 <MudTextField Clearable="true" @bind-Value="sentence" Label="Search a book" Elevation="4" Variant="Variant.Text"></MudTextField>
@@ -28,45 +28,24 @@
     string info = $"Showing {books.Skip(10*(page-1)).Take(10).Count()} of {books.Count()}";
     <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Info">@info</MudText>
     <MudGrid Class="mt-3">
-        @{
-
-            Console.WriteLine(10*(page-1));
-            Console.WriteLine(books.Skip(10*(page-1)).Take(10).Count());
-        }
+        
         @foreach (var book in books.GetRange(10*(page-1),books.Skip(10*(page-1)).Take(10).Count()))
         {
             <MudItem xs=12 lg=6>
                 <MudGrid>
+                    @{
+                        var isSaved = isOnShelf(book);
+                    }
+                    <BookShelf_Blazor.Components.BookInfo book="@book">
 
-                    <MudItem xs="4" class="d-flex justify-center">
-                        <MudImage ObjectFit="ObjectFit.Cover"  Height="150" Width="100" ObjectPosition="ObjectPosition.Center" Src="@book.cover" Alt="Cover"  Elevation="25" Class="rounded-lg"/>
-                    </MudItem>
-                    <MudItem xs=8 class="text-start">
-
-                        @if (book.title != null)
-                        {
-                            <MudText  Elevation="25" Typo="Typo.caption" Color="Color.Primary">@book.title.ToUpper()</MudText>
-                        }
-                        @if (book.author_name != null)
-                        {
-                            <MudText Typo="Typo.subtitle2">Author: @book.author_name[0]</MudText>
-                        }
-                        @if (book.first_publish_year != null )
-                        {
-                            <MudText Typo="Typo.subtitle2">Publishing Year: @book.first_publish_year</MudText>
-                        }
-                        @if (book.publisher != null )
-                        {
-                            <MudText Typo="Typo.subtitle2">Publisher: @book.publisher[0]</MudText>
-                        }
-                        <br>
-                        <MudMenu Label="Save" Variant="Variant.Filled" EndIcon="@Icons.Filled.KeyboardArrowDown" IconColor="Color.Secondary" >
-                            <MudMenuItem @onclick="() => saveAsRead(book)">As Read</MudMenuItem>
+                        <MudMenu Disabled="isSaved" Label="@(isSaved ?"Already on shelf" : "Save")" Variant="Variant.Filled" EndIcon="@Icons.Filled.KeyboardArrowDown" Color="Color.Secondary" IconColor="Color.Primary" >
+                            <MudMenuItem OnClick="() => saveAsFinished(book)">As Read</MudMenuItem>
                             <MudMenuItem OnClick="() => saveAsReading(book)">As Reading</MudMenuItem>
-                            <MudMenuItem OnClick="() => saveAsToBuy(book)">As To Buy</MudMenuItem>
+                            <MudMenuItem OnClick="() => saveAsWished(book)">As To Buy</MudMenuItem>
+                            <MudMenuItem OnClick="() => saveAsTBR(book)">As To Be Read</MudMenuItem>
                         </MudMenu>
-
-                    </MudItem>
+                    </BookShelf_Blazor.Components.BookInfo>
+                    
                 </MudGrid>
 
 
@@ -80,15 +59,13 @@
 }
 
 @code {
-    private int page = 1;
+    
     private bool onSearch = false;
     bool drawerStatus = false;
     private string sentence = "";
     private bool showInfo  {get;set;} = false;
     private List<Book>? books;
     private dynamic? infoRes = null;
-    int pages = 0;
-
     private async Task search()
     {
         HttpClient client = new HttpClient();
@@ -111,11 +88,25 @@
     private void changePage(int i){
         page=i;
     }
-    private async void saveAsRead(Book book){
+    private async void saveAsFinished(Book book){
 
         string message = "Failed to save";
         var severity = Severity.Error;
-        if(BookShelf.saveAsFinished(book)){
+        if(saveOnFinished(book)){
+            message = "Book Saved Successfully!";
+            severity =  Severity.Success;
+        }
+        
+        Snackbar.Add(message, severity, config =>
+        {
+            config.ShowCloseIcon = true;
+        });
+    }
+    
+    private void saveAsReading(Book book){
+        string message = "Failed to save";
+        var severity = Severity.Error;
+        if(saveOnReading(book)){
             message = "Book Saved Successfully!";
             severity =  Severity.Success;
             Console.WriteLine("aaaaaaa");
@@ -123,15 +114,35 @@
         
         Snackbar.Add(message, severity, config =>
         {
-            Console.WriteLine("aaaaaaa");
             config.ShowCloseIcon = true;
-            Console.WriteLine("aaaaaaa");
         });
     }
-    private void saveAsReading(Book book){
+    private void saveAsWished(Book book){
+        string message = "Failed to save";
+        var severity = Severity.Error;
+        if(saveOnWish(book)){
+            message = "Book Saved Successfully!";
+            severity =  Severity.Success;
+            Console.WriteLine("aaaaaaa");
+        }
         
+        Snackbar.Add(message, severity, config =>
+        {
+            config.ShowCloseIcon = true;
+        });
     }
-    private void saveAsToBuy(Book book){
+    private void saveAsTBR(Book book){
+        string message = "Failed to save";
+        var severity = Severity.Error;
+        if(saveOnTBR(book)){
+            message = "Book Saved Successfully!";
+            severity =  Severity.Success;
+            Console.WriteLine("aaaaaaa");
+        }
         
+        Snackbar.Add(message, severity, config =>
+        {
+            config.ShowCloseIcon = true;
+        });
     }
 }

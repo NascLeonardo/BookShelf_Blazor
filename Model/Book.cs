@@ -1,15 +1,11 @@
-using System.ComponentModel;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using BookShelf_Blazor.Enums;
 using Newtonsoft.Json;
-using BookShelf_Blazor.Enum;
-namespace BookShelf_Blazor.Models
+
+namespace BookShelf_Blazor.Model
 {
     public class Book
     {
-        private Blazored.LocalStorage.ISyncLocalStorageService localStorage;
+
         public string? key { get; set; }
         public string? title { get; set; }
         public int? first_publish_year { get; set; }
@@ -21,15 +17,14 @@ namespace BookShelf_Blazor.Models
         public List<string>? author_name { get; set; }
         public List<string>? publisher { get; set; }
         public List<string>? isbn { get; set; }
-        public BookStatus? bookStatus {get; set;}
-        public DateTime? DateAddToShelf {get;set;}
-        public DateTime? DateStartedRead{get;set;}
-        public DateTime? DateFinished{get;set;}
+        public BookStatus? bookStatus { get; set; }
+        public DateTime? DateAddToShelf { get; set; }
+        public DateTime? DateStartedRead { get; set; }
+        public DateTime? DateFinished { get; set; }
+        public int rating { get; set; }
 
-        public bool isOnShelf(){
-            return localStorage.GetItem<List<Book>>("Books").Any(x => x.key == this.key);
-        }
-        public async Task<string> getDescription(){
+        public async Task<string> getDescription()
+        {
             HttpClient client = new HttpClient();
             var description = "";
             string path = $"https://openlibrary.org/works/{this.key}.json";
@@ -41,7 +36,5 @@ namespace BookShelf_Blazor.Models
             }
             return description;
         }
-
     }
-    
 }

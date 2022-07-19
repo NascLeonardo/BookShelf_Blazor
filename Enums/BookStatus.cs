@@ -1,4 +1,4 @@
-namespace BookShelf_Blazor.Enum
+namespace BookShelf_Blazor.Enums
 {
     public enum BookStatus
     {

@@ -1,0 +1,59 @@
+﻿@page "/Shelf"
+@inject ISnackbar Snackbar
+@inherits BaseComponent;
+@using BookShelf_Blazor.Model
+
+<PageTitle>Your Shelf</PageTitle>
+
+<div class="mt-1 d-flex flex-column align-center">
+	<MudPagination BoundaryCount="1" MiddleCount="3" ShowFirstButton="true" ShowLastButton="true" Count="@pages" Class="mt-4" SelectedChanged="changePage" Size="Size.Small" />
+</div>
+<br>
+@{
+	string info = $"Showing {books.Skip(10 * (page - 1)).Take(10).Count()} of {books.Count()}";
+}
+<MudText Class="mt-3" Typo="Typo.caption" Color="Color.Info">@info</MudText>
+<MudGrid Class="mt-3">
+
+	@foreach (var book in books.GetRange(10 * (page - 1), books.Skip(10 * (page - 1)).Take(10).Count()))
+	{
+		<MudItem xs=12 lg=6>
+			<MudGrid>
+				
+				<BookShelf_Blazor.Components.BookInfo book="@book">
+					<MudRating @onclick="() => updateRating(book)" @bind-SelectedValue="book.rating" />
+				</BookShelf_Blazor.Components.BookInfo>
+
+			</MudGrid>
+
+		</MudItem>
+	}
+</MudGrid>
+
+
+
+@code {
+	private List<Book> books { get; set; }
+
+	protected override void OnInitialized()
+	{
+		books = GetBooks();
+		pages = books.Count() % 10 != 0 ? books.Count() / 10 + 1 : books.Count() / 10;
+	}
+	private void updateRating(Book book)
+	{
+		string message = "Failed to save";
+		var severity = Severity.Error;
+		if (updateBook(book))
+		{
+			message = "Book Saved Successfully!";
+			severity = Severity.Success;
+			Console.WriteLine("aaaaaaa");
+		}
+
+		Snackbar.Add(message, severity, config =>
+		{
+			config.ShowCloseIcon = true;
+		});
+	}
+}
