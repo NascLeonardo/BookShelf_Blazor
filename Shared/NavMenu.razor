@@ -1,4 +1,12 @@
-﻿<MudNavMenu>
-    <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Search</MudNavLink>
-    <MudNavLink Href="Shelf" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Add">Your Shelf</MudNavLink>
+﻿<MudNavMenu Bordered="true" Color="Color.Info" >
+    <MudNavLink  Href="/" Match="NavLinkMatch.All" IconColor="Color.Secondary" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+    <MudNavLink  Href="/Search" Match="NavLinkMatch.All" IconColor="Color.Secondary" Icon="@Icons.Material.Filled.Search">Search</MudNavLink>
+    <MudNavGroup Title="Your Books" IconColor="Color.Secondary" Icon="@Icons.Material.Filled.LibraryBooks" Expanded="true">
+            <MudNavLink Match="NavLinkMatch.All" Href="/Shelf/" >All</MudNavLink>
+            <MudNavLink Href="/Shelf/Finished" >Finished</MudNavLink>
+            <MudNavLink Href="/Shelf/Reading" >Reading</MudNavLink>
+            <MudNavLink Href="/Shelf/TBR" >To be Read</MudNavLink>
+            <MudNavLink Href="/Shelf/Wished" >Wishes</MudNavLink>
+
+        </MudNavGroup>
 </MudNavMenu>

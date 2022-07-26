@@ -1,148 +1,65 @@
-﻿@using BookShelf_Blazor.Model
-@using Newtonsoft.Json
-@inject ISnackbar Snackbar
+﻿@page "/"
+@page "/Index"
+@using BookShelf_Blazor.Model
 @inherits BaseComponent
-@page "/"
-@using Components
 
-<PageTitle>Index</PageTitle>
-<MudTextField Clearable="true" @bind-Value="sentence" Label="Search a book" Elevation="4" Variant="Variant.Text"></MudTextField>
-<MudButton  Disabled="@onSearch" Variant="Variant.Filled" Spacing Color="Color.Secondary" Class="mt-3" OnClick="search">
-    @if (onSearch)
-    {
-        <MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true"/>
-        <MudText Class="ms-2">Searching</MudText>
-    }
-    else
-    {
-        <MudText>Search</MudText>
-    }
-</MudButton>
-
-@if (showInfo)
-{
-    <div class="mt-1 d-flex flex-column align-center">
-        <MudPagination BoundaryCount="1" MiddleCount="3" ShowFirstButton="true" ShowLastButton="true" Count="@pages" Class="mt-4" SelectedChanged="changePage" Size="Size.Small"/>
-    </div>
-    <br>
-    string info = $"Showing {books.Skip(10*(page-1)).Take(10).Count()} of {books.Count()}";
-    <MudText Class="mt-3" Typo="Typo.caption" Color="Color.Info">@info</MudText>
-    <MudGrid Class="mt-3">
-        
-        @foreach (var book in books.GetRange(10*(page-1),books.Skip(10*(page-1)).Take(10).Count()))
-        {
-            <MudItem xs=12 lg=6>
-                <MudGrid>
-                    @{
-                        var isSaved = isOnShelf(book);
-                    }
-                    <BookShelf_Blazor.Components.BookInfo book="@book">
-
-                        <MudMenu Disabled="isSaved" Label="@(isSaved ?"Already on shelf" : "Save")" Variant="Variant.Filled" EndIcon="@Icons.Filled.KeyboardArrowDown" Color="Color.Secondary" IconColor="Color.Primary" >
-                            <MudMenuItem OnClick="() => saveAsFinished(book)">As Read</MudMenuItem>
-                            <MudMenuItem OnClick="() => saveAsReading(book)">As Reading</MudMenuItem>
-                            <MudMenuItem OnClick="() => saveAsWished(book)">As To Buy</MudMenuItem>
-                            <MudMenuItem OnClick="() => saveAsTBR(book)">As To Be Read</MudMenuItem>
-                        </MudMenu>
-                    </BookShelf_Blazor.Components.BookInfo>
-                    
-                </MudGrid>
+<MudStack >
+	<h2>Home </h2>
+	@if (booksOnShelf!= null && booksOnShelf.Count()>0)
+	{
+		<MudStack>
+			@{
+				double[] data = { booksOnShelf.Where(x=>x.bookStatus==Enums.BookStatus.Finished).Count(), booksOnShelf.Where(x=>x.bookStatus==Enums.BookStatus.Reading).Count(), booksOnShelf.Where(x=>x.bookStatus==Enums.BookStatus.Wished).Count(), booksOnShelf.Where(x=>x.bookStatus==Enums.BookStatus.TBR).Count() };
+			}
+			 <MudChart ChartType="ChartType.Donut" Width="300px" Height="300px" InputData="@data" InputLabels="@labels">
+				<CustomGraphics>
+					<text class="donut-inner-text" x="47%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="2">Total</text>
+					<text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">@data.Sum().ToString()</text>
+				</CustomGraphics>
+			</MudChart>
+		</MudStack>
 
 
+		
+		<h3>Latest on the shelf:</h3
+		<MudStack Row="true">
+			<BookShelf_Blazor.Components.BookInfo book="booksOnShelf.OrderByDescending(x=>x.DateAddToShelf).First()">
 
-            </MudItem>
-        }
-    </MudGrid>
-    
+			</BookShelf_Blazor.Components.BookInfo>
+		</MudStack>
+		<br />
+		@if (booksOnShelf.Where(x => x.bookStatus == Enums.BookStatus.Reading) != null)
+		{
 
+			<h3>Books that you are reading:</h3
+			<MudStack Row="true" Class="overflow-auto">	
 
-}
+					@{
+						var readingBooks = booksOnShelf.Where(x => x.bookStatus == Enums.BookStatus.Reading).ToList();
+					}
+					@foreach (var book in readingBooks.OrderByDescending(x => x.DateStartedRead).ToList())
+					{
+						<BookShelf_Blazor.Components.BookInfo book="book">
+
+							if (book.DateStartedRead.HasValue)
+							{
+								<MudText Typo="Typo.subtitle2">Started reading in @book.DateStartedRead.Value.ToShortDateString()</MudText>
+							}
+						</BookShelf_Blazor.Components.BookInfo>
+					}
+
+		
+			</MudStack>
+		}
+	}
+</MudStack>
 
 @code {
-    
-    private bool onSearch = false;
-    bool drawerStatus = false;
-    private string sentence = "";
-    private bool showInfo  {get;set;} = false;
-    private List<Book>? books;
-    private dynamic? infoRes = null;
-    private async Task search()
-    {
-        HttpClient client = new HttpClient();
+	private List<Book>? booksOnShelf { get; set; } = null;
+	private string[] labels = { "Finished", "Reading", "Wished", "To be Read" };
 
-        onSearch = true;
-        string path = $"https://openlibrary.org/search.json?q={sentence.Replace(" ", "+")}";
-        HttpResponseMessage response = await client.GetAsync(path);
-        if (response.IsSuccessStatusCode)
-        {
-
-            infoRes = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
-            books = JsonConvert.DeserializeObject<List<Book>>(infoRes.docs.ToString());
-            books = books.OrderByDescending(x=> x.first_publish_year).DistinctBy(x=>x.title).ToList();
-            pages = books.Count() % 10 != 0 ? books.Count() / 10 + 1 : books.Count() / 10 ;
-            page = 1;
-            showInfo = true;
-        }
-        onSearch = false;
-    }
-    private void changePage(int i){
-        page=i;
-    }
-    private async void saveAsFinished(Book book){
-
-        string message = "Failed to save";
-        var severity = Severity.Error;
-        if(saveOnFinished(book)){
-            message = "Book Saved Successfully!";
-            severity =  Severity.Success;
-        }
-        
-        Snackbar.Add(message, severity, config =>
-        {
-            config.ShowCloseIcon = true;
-        });
-    }
-    
-    private void saveAsReading(Book book){
-        string message = "Failed to save";
-        var severity = Severity.Error;
-        if(saveOnReading(book)){
-            message = "Book Saved Successfully!";
-            severity =  Severity.Success;
-            Console.WriteLine("aaaaaaa");
-        }
-        
-        Snackbar.Add(message, severity, config =>
-        {
-            config.ShowCloseIcon = true;
-        });
-    }
-    private void saveAsWished(Book book){
-        string message = "Failed to save";
-        var severity = Severity.Error;
-        if(saveOnWish(book)){
-            message = "Book Saved Successfully!";
-            severity =  Severity.Success;
-            Console.WriteLine("aaaaaaa");
-        }
-        
-        Snackbar.Add(message, severity, config =>
-        {
-            config.ShowCloseIcon = true;
-        });
-    }
-    private void saveAsTBR(Book book){
-        string message = "Failed to save";
-        var severity = Severity.Error;
-        if(saveOnTBR(book)){
-            message = "Book Saved Successfully!";
-            severity =  Severity.Success;
-            Console.WriteLine("aaaaaaa");
-        }
-        
-        Snackbar.Add(message, severity, config =>
-        {
-            config.ShowCloseIcon = true;
-        });
-    }
+	protected override void OnInitialized()
+	{
+		booksOnShelf = GetBooks();
+	}
 }

@@ -1,35 +1,51 @@
 ﻿@using BookShelf_Blazor.Model
-<MudItem xs="4" class="d-flex justify-center">
-	<MudImage ObjectFit="ObjectFit.Cover" Height="150" Width="100" ObjectPosition="ObjectPosition.Center" Src="@book.cover" Alt="Cover" Elevation="25" Class="rounded-lg" />
-</MudItem>
-<MudItem xs=8 class="text-start">
+<MudPaper Elevation="0" MinWidth="300px">
 
-	@if (book.title != null)
-	{
-		<MudText Elevation="25" Typo="Typo.caption" Color="Color.Primary">@book.title.ToUpper()</MudText>
-	}
-	@if (book.author_name != null)
-	{
-		<MudText Typo="Typo.subtitle2">Author: @book.author_name[0]</MudText>
-	}
-	@if (book.first_publish_year != null)
-	{
-		<MudText Typo="Typo.subtitle2">Publishing Year: @book.first_publish_year</MudText>
-	}
-	@if (book.publisher != null)
-	{
-		<MudText Typo="Typo.subtitle2">Publisher: @book.publisher[0]</MudText>
-	}
-	<br>
-	
-	@ChildContent
+	<MudStack Row="true" Class="m-1"  >
+		<MudItem Class="d-flex justify-center align-center mr-3">
+			@if (book.volumeInfo.imageLinks != null)
+			{
+				<MudImage ObjectFit="ObjectFit.Cover" Height="150" Width="100" ObjectPosition="ObjectPosition.Center" Src="@book.volumeInfo.imageLinks.thumbnail" Alt="Cover" Elevation="25" Class="rounded-lg" />
+			}
+		</MudItem>
+		<MudStack>
+			<MudItem >
 
+				@if (!string.IsNullOrEmpty( book.volumeInfo.title))
+				{
+					<MudText Elevation="25" Typo="Typo.caption" Color="Color.Primary">@book.volumeInfo.title.ToUpper()  </MudText>
+				}
+				@if (!string.IsNullOrEmpty(book.volumeInfo.authors[0]))
+				{
+					<MudText Typo="Typo.subtitle2">Author: @book.volumeInfo.authors[0]</MudText>
+				}
+				@if (!string.IsNullOrEmpty( book.volumeInfo.publishedDate))
+				{
+					<MudText Typo="Typo.subtitle2">Publishing date: @book.volumeInfo.publishedDate.Replace("-","/")</MudText>
+				}
+				@if (book.volumeInfo.pageCount != null)
+				{
+					<MudText Typo="Typo.subtitle2">Pages: @book.volumeInfo.pageCount</MudText>
+				}
+				@if (!string.IsNullOrEmpty( book.volumeInfo.title))
+				{
+					<MudText Typo="Typo.subtitle2">Publisher: @book.volumeInfo.publisher</MudText>
+				}
+			
+				@ChildContent
+			</MudItem>
 
-</MudItem>
+		</MudStack>
+
+	</MudStack>
+</MudPaper>
+
 
 @code {
 	[Parameter]
-	public Book book { get; set; }
+	public Book? book { get; set; }
 	[Parameter]
 	public RenderFragment? ChildContent { get; set; }
+
+	
 }

@@ -1,0 +1,193 @@
+﻿@using BookShelf_Blazor.Model
+@using Newtonsoft.Json
+@inject ISnackbar Snackbar
+@inherits BaseComponent
+@page "/Search"
+@using Components
+
+<PageTitle>Index</PageTitle>
+<MudTextField @bind-Value="sentence" Label="Search a book" Elevation="4" Variant="Variant.Text"></MudTextField>
+<MudButton Disabled="@onSearch" Variant="Variant.Filled" Spacing Color="Color.Secondary" Class="mt-3" OnClick="search">
+	@if (onSearch)
+	{
+		<MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+		<MudText Class="ms-2">Searching</MudText>
+	}
+	else
+	{
+		<MudText>Search</MudText>
+	}
+</MudButton>
+
+@if (showInfo)
+{
+
+	<br>
+	<MudGrid Class="mt-3">
+
+		@foreach (var book in books)
+		{
+			<MudItem xs=12 lg=6>
+				@{
+					var isSaved = isOnShelf(book);
+				}
+				<BookShelf_Blazor.Components.BookInfo book="@book">
+
+					<MudMenu Disabled="isSaved" Label="@(isSaved ?"Already on shelf" : "Save")" Variant="Variant.Outlined" Class="mb-1" EndIcon="@Icons.Filled.KeyboardArrowDown" Color="Color.Primary" IconColor="Color.Primary">
+						<MudMenuItem OnClick="() => saveAsFinished(book)">As Read</MudMenuItem>
+						<MudMenuItem OnClick="() => saveAsReading(book)">As Reading</MudMenuItem>
+						<MudMenuItem OnClick="() => saveAsWished(book)">As To Buy</MudMenuItem>
+						<MudMenuItem OnClick="() => saveAsTBR(book)">As To Be Read</MudMenuItem>
+					</MudMenu>
+				</BookShelf_Blazor.Components.BookInfo>
+			</MudItem>
+		}
+	</MudGrid>
+	if (!endLoad)
+	{
+
+		<MudButton Disabled="@onLoading" FullWidth Variant="Variant.Filled" Spacing Color="Color.Primary" Class="my-3" OnClick="loadMore">
+			@if (onLoading)
+			{
+				<MudProgressCircular Class="ms-n1" Size="Size.Small" Indeterminate="true" />
+				<MudText Class="ms-2">Loading</MudText>
+			}
+			else
+			{
+				<MudText>Load More</MudText>
+			}
+		</MudButton>
+	}
+
+
+
+}
+
+@code {
+	private bool onSearch = false;
+	private bool onLoading = false;
+	private string sentence = "";
+	private bool showInfo { get; set; } = false;
+	private List<Book>? books;
+	private string? lastSearch;
+	private int searchIndex = 0;
+	private bool endLoad = false;
+
+	private async Task search()
+	{
+		HttpClient client = new HttpClient();
+		onSearch = true;
+		searchIndex = 0;
+		string path = $"https://www.googleapis.com/books/v1/volumes?q={sentence.Replace(" ", "+")}";
+		HttpResponseMessage response = await client.GetAsync($"{path}&startIndex={searchIndex}");
+		if (response.IsSuccessStatusCode)
+		{
+			var infoRes = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
+			List<Book> returnBooks = JsonConvert.DeserializeObject<List<Book>>(infoRes.items.ToString());
+			if (returnBooks.Count() < 10)
+			{
+				endLoad = true;
+			}
+			else
+			{
+				endLoad = false;
+			}
+			books = JsonConvert.DeserializeObject<List<Book>>(infoRes.items.ToString());
+			showInfo = true;
+			lastSearch = path;
+
+		}
+		onSearch = false;
+	}
+	private async void loadMore()
+	{
+		searchIndex +=10;
+		HttpClient client = new HttpClient();
+		var path = $"{lastSearch}&startIndex={searchIndex}";
+		onLoading = true;
+		HttpResponseMessage response = await client.GetAsync(path);
+
+		if (response.IsSuccessStatusCode)
+		{
+			var res = JsonConvert.DeserializeObject<dynamic>(await response.Content.ReadAsStringAsync());
+			List<Book> returnBooks = JsonConvert.DeserializeObject<List<Book>>(res.items.ToString());
+
+			if (returnBooks.Count() > 0)
+			{
+				books.AddRange(returnBooks);
+			}
+			if (returnBooks.Count() < 10)
+			{
+				endLoad = true;
+			}
+		}
+		onLoading = false;
+		StateHasChanged();
+
+	}
+	private void saveAsFinished(Book book)
+	{
+
+		string message = "Failed to save";
+		var severity = Severity.Error;
+		if (saveOnFinished(book))
+		{
+			message = "Book Saved Successfully!";
+			severity = Severity.Success;
+		}
+
+		Snackbar.Add(message, severity, config =>
+		{
+			config.ShowCloseIcon = true;
+		});
+	}
+
+	private void saveAsReading(Book book)
+	{
+		string message = "Failed to save";
+		var severity = Severity.Error;
+		if (saveOnReading(book))
+		{
+			message = "Book Saved Successfully!";
+			severity = Severity.Success;
+			Console.WriteLine("aaaaaaa");
+		}
+
+		Snackbar.Add(message, severity, config =>
+		{
+			config.ShowCloseIcon = true;
+		});
+	}
+	private void saveAsWished(Book book)
+	{
+		string message = "Failed to save";
+		var severity = Severity.Error;
+		if (saveOnWish(book))
+		{
+			message = "Book Saved Successfully!";
+			severity = Severity.Success;
+			Console.WriteLine("aaaaaaa");
+		}
+
+		Snackbar.Add(message, severity, config =>
+		{
+			config.ShowCloseIcon = true;
+		});
+	}
+	private void saveAsTBR(Book book)
+	{
+		string message = "Failed to save";
+		var severity = Severity.Error;
+		if (saveOnTBR(book))
+		{
+			message = "Book Saved Successfully!";
+			severity = Severity.Success;
+			Console.WriteLine("aaaaaaa");
+		}
+
+		Snackbar.Add(message, severity, config =>
+		{
+			config.ShowCloseIcon = true;
+		});
+	}
+}

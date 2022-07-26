@@ -7,13 +7,9 @@
     private Blazored.LocalStorage.ISyncLocalStorageService localStorage { get; set; }
 
 
-    public int pages = 0;
-    public int page = 1;
-    public void changePage(int i){
-        page=i;
-    }
+    
     public bool isOnShelf(Book book){
-        return GetBooks().Any(x => x.key == book.key);
+        return GetBooks().Any(x => x.id == book.id);
     }
 
     /// <summary>
@@ -21,14 +17,14 @@
     /// </summary>
     /// <param name="book"></param>
     /// <returns>Return a List<Book> with every book saved</returns>
-    public List<Book> GetBooks()
+    public List<Book>? GetBooks()
     {
-        List<Book> books = new List<Book>();
+        List<Book> books =null;
         try
         {
             if (localStorage.ContainKey("Books"))
             {
-                books = localStorage.GetItem<List<Book>>("Books");
+                books =  JsonConvert.DeserializeObject<List<Book>>(localStorage.GetItem<string>("Books"));
             }
         }catch (Exception e) {
             throw e;
@@ -47,13 +43,17 @@
 
             if(!isOnShelf(book)){
                 book.DateAddToShelf = DateTime.Now;
+                book.bookStatus = Enums.BookStatus.Finished;
+                book.DateFinished = DateTime.Now;
+                booksOnShelf.Add(book);
+
             }else{
-                book = booksOnShelf.Single(x=>x.key == book.key);
+                book = booksOnShelf.Single(x=>x.id == book.id);
+                int indexToChange = booksOnShelf.FindIndex(x => x.id == book.id);
+                booksOnShelf[indexToChange].DateFinished = DateTime.Now;
+                booksOnShelf[indexToChange].bookStatus = Enums.BookStatus.Finished;
             }
-            book.bookStatus = Enums.BookStatus.Finished;
-            book.DateFinished = DateTime.Now;
-            booksOnShelf.Add(book);
-            localStorage.SetItem("Books", booksOnShelf);
+            localStorage.SetItem("Books", JsonConvert.SerializeObject(booksOnShelf));
             return true;
         }catch (Exception e){
             throw e;
@@ -70,13 +70,16 @@
             var booksOnShelf = GetBooks();
 
             if(!isOnShelf(book)){
-                book.DateAddToShelf = DateTime.Now;
+                book.DateAddToShelf = DateTime.Now;               
+                book.bookStatus = Enums.BookStatus.Wished;
+                booksOnShelf.Add(book);
+
             }else{
-                book = booksOnShelf.Single(x=>x.key == book.key);
+                book = booksOnShelf.Single(x=>x.id == book.id);
+                int indexToChange = booksOnShelf.FindIndex(x => x.id == book.id);
+                booksOnShelf[indexToChange].bookStatus = Enums.BookStatus.Wished;
             }
-            book.bookStatus = Enums.BookStatus.Wished;
-            booksOnShelf.Add(book);
-            localStorage.SetItem("Books", booksOnShelf);
+            localStorage.SetItem("Books", JsonConvert.SerializeObject(booksOnShelf));
             return true;
         }catch (Exception e){
             throw e;
@@ -94,12 +97,17 @@
 
             if(!isOnShelf(book)){
                 book.DateAddToShelf = DateTime.Now;
+                book.DateStartedRead = DateTime.Now; 
+                book.bookStatus = Enums.BookStatus.Reading;
+                booksOnShelf.Add(book);
+
             }else{
-                book = booksOnShelf.Single(x=>x.key == book.key);
+                book = booksOnShelf.Single(x=>x.id == book.id);
+                int indexToChange = booksOnShelf.FindIndex(x => x.id == book.id);
+                booksOnShelf[indexToChange].bookStatus = Enums.BookStatus.Reading;
+                booksOnShelf[indexToChange].DateStartedRead = DateTime.Now; 
             }
-            book.bookStatus = Enums.BookStatus.Reading;
-            booksOnShelf.Add(book);
-            localStorage.SetItem("Books", booksOnShelf);
+            localStorage.SetItem("Books", JsonConvert.SerializeObject(booksOnShelf));
             return true;
         }catch (Exception e){
             throw e;
@@ -117,12 +125,15 @@
 
             if(!isOnShelf(book)){
                 book.DateAddToShelf = DateTime.Now;
+                book.bookStatus = Enums.BookStatus.TBR;
+                booksOnShelf.Add(book);
+
             }else{
-                book = booksOnShelf.Single(x=>x.key == book.key);
+                book = booksOnShelf.Single(x=>x.id == book.id);
+                int indexToChange = booksOnShelf.FindIndex(x => x.id == book.id);
+                booksOnShelf[indexToChange].bookStatus = Enums.BookStatus.TBR;
             }
-            book.bookStatus = Enums.BookStatus.TBR;
-            booksOnShelf.Add(book);
-            localStorage.SetItem("Books", booksOnShelf);
+            localStorage.SetItem("Books", JsonConvert.SerializeObject(booksOnShelf));
             return true;
         }catch (Exception e){
             throw e;
@@ -130,10 +141,10 @@
     }
 
     /// <summary>
-    /// Update a book by removing the book with the same key from the saved and inserting the new state
+    /// Update a book by removing the book with the same id from the saved and inserting the new state
     /// </summary>
     /// <param name="book"></param>
-    /// <returns>Return true if the book is updated successfully</returns>
+    /// <returns>Return true if the book was updated successfully</returns>
     public bool updateBook(Book book){
         try{
             var booksOnShelf = GetBooks();
@@ -141,10 +152,31 @@
             if(!isOnShelf(book)){
                 return false;
             }else{
-                int indexToChange = booksOnShelf.FindIndex(x => x.key == book.key);
+                int indexToChange = booksOnShelf.FindIndex(x => x.id == book.id);
                 booksOnShelf[indexToChange] = book;
             }
-            localStorage.SetItem("Books", booksOnShelf);
+            localStorage.SetItem("Books", JsonConvert.SerializeObject(booksOnShelf));
+            return true;
+        }catch (Exception e){
+            throw e;
+        }
+    }
+    /// <summary>
+    /// Remove a book from the saved based on his id
+    /// </summary>
+    /// <param name="book"></param>
+    /// <returns>Return true if the book was removed successfully</returns>
+    public bool removeBook(Book book){
+        try{
+            var booksOnShelf = GetBooks();
+
+            if(!isOnShelf(book)){
+                return false;
+            }else{
+                int indexToRemove = booksOnShelf.FindIndex(x => x.id == book.id);
+                booksOnShelf.RemoveAt(indexToRemove);
+            }
+            localStorage.SetItem("Books", JsonConvert.SerializeObject(booksOnShelf));
             return true;
         }catch (Exception e){
             throw e;
