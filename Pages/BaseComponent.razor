@@ -9,6 +9,7 @@
 
     
     public bool isOnShelf(Book book){
+
         return GetBooks().Any(x => x.id == book.id);
     }
 
@@ -17,9 +18,9 @@
     /// </summary>
     /// <param name="book"></param>
     /// <returns>Return a List<Book> with every book saved</returns>
-    public List<Book>? GetBooks()
+    public List<Book> GetBooks()
     {
-        List<Book> books =null;
+        List<Book> books = new List<Book>();
         try
         {
             if (localStorage.ContainKey("Books"))
