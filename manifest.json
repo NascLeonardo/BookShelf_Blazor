@@ -1,7 +1,7 @@
 {
   "name": "BookShelf_Blazor",
   "short_name": "BookShelf_Blazor",
-  "start_url": "./",
+  "start_url": "./BookShelf_Blazor",
   "display": "standalone",
   "background_color": "#000",
   "theme_color": "#03173d",
