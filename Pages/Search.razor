@@ -34,10 +34,10 @@
 				<BookShelf_Blazor.Components.BookInfo book="@book">
 
 					<MudMenu Disabled="isSaved" Label="@(isSaved ?"Already on shelf" : "Save")" Variant="Variant.Outlined" Class="mb-1" EndIcon="@Icons.Filled.KeyboardArrowDown" Color="Color.Primary" IconColor="Color.Primary">
-						<MudMenuItem OnClick="() => saveAsFinished(book)">As Read</MudMenuItem>
-						<MudMenuItem OnClick="() => saveAsReading(book)">As Reading</MudMenuItem>
-						<MudMenuItem OnClick="() => saveAsWished(book)">As To Buy</MudMenuItem>
-						<MudMenuItem OnClick="() => saveAsTBR(book)">As To Be Read</MudMenuItem>
+						<MudMenuItem OnTouch="() => saveAsFinished(book)" OnClick="() => saveAsFinished(book)">As Read</MudMenuItem>
+						<MudMenuItem OnTouch="() => saveAsReading(book)" OnClick="() => saveAsReading(book)">As Reading</MudMenuItem>
+						<MudMenuItem OnTouch="() => saveAsWished(book)" OnClick="() => saveAsWished(book)">As To Buy</MudMenuItem>
+						<MudMenuItem OnTouch="() => saveAsTBR(book)" OnClick="() => saveAsTBR(book)">As To Be Read</MudMenuItem>
 					</MudMenu>
 				</BookShelf_Blazor.Components.BookInfo>
 			</MudItem>

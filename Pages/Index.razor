@@ -13,8 +13,8 @@
 			}
 			 <MudChart ChartType="ChartType.Donut" Width="300px" Height="300px" InputData="@data" InputLabels="@labels">
 				<CustomGraphics>
-					<text class="donut-inner-text" x="47%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="2">Total</text>
-					<text class="donut-inner-text" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="black" font-family="Helvetica" font-size="5">@data.Sum().ToString()</text>
+					<text class="donut-inner-text text-white" x="47%" y="35%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Helvetica" font-size="2">Total</text>
+					<text class="donut-inner-text text-white" x="47%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="white" font-family="Helvetica" font-size="5">@data.Sum().ToString()</text>
 				</CustomGraphics>
 			</MudChart>
 		</MudStack>
@@ -28,7 +28,7 @@
 			</BookShelf_Blazor.Components.BookInfo>
 		</MudStack>
 		<br />
-		@if (booksOnShelf.Where(x => x.bookStatus == Enums.BookStatus.Reading) != null)
+		@if (booksOnShelf.Where(x => x.bookStatus == Enums.BookStatus.Reading).Count() >0)
 		{
 
 			<h3>Books that you are reading:</h3
@@ -41,7 +41,7 @@
 					{
 						<BookShelf_Blazor.Components.BookInfo book="book">
 
-							if (book.DateStartedRead.HasValue)
+							@if (book.DateStartedRead.HasValue)
 							{
 								<MudText Typo="Typo.subtitle2">Started reading in @book.DateStartedRead.Value.ToShortDateString()</MudText>
 							}
