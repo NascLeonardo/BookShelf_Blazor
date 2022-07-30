@@ -1,0 +1,10 @@
+{
+  "name": "BookShelf_Blazor",
+  "short_name": "BookShelf_Blazor",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#000",
+  "theme_color": "#03173d",
+  "prefer_related_applications": false
+  
+}
